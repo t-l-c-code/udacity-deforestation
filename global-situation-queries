@@ -1,0 +1,48 @@
+DROP VIEW IF EXISTS forestation;
+CREATE VIEW forestation AS (SELECT fa.*,
+la.total_area_sq_mi*2.59 AS total_land_area_sqkm,
+r.region,
+r.income_group,
+(fa.forest_area_sqkm/(la.total_area_sq_mi*2.59)*100) AS forest_percent
+FROM forest_area AS fa
+INNER JOIN land_area AS la ON fa.country_code = la.country_code AND fa.year = la.year
+INNER JOIN regions AS r ON la.country_code = r.country_code)
+
+# What was the total forest area (in sq km) of the world in 1990?
+SELECT country_name, year, forest_area_sqkm
+FROM forestation
+WHERE country_name = 'World' AND year = 1990
+
+# What was the total forest area (in sq km) of the world in 2016?
+SELECT country_name, year, forest_area_sqkm
+FROM forestation
+WHERE country_name = 'World' AND year = 2016
+
+# What was the change (in sq km) in the forest area of the world from 1990 to 2016?
+SELECT
+(SELECT forest_area_sqkm
+FROM forestation
+WHERE country_name = 'World' AND year = 1990)-
+(SELECT forest_area_sqkm
+FROM forestation
+WHERE country_name = 'World' AND year = 2016)
+
+#What was the percent change in forest area of the world between 1990 and 2016?
+SELECT
+(((SELECT forest_area_sqkm
+FROM forestation
+WHERE country_name = 'World' AND year = 1990)-
+(SELECT forest_area_sqkm
+FROM forestation
+WHERE country_name = 'World' AND year = 2016)) /
+(SELECT forest_area_sqkm
+FROM forestation
+WHERE country_name = 'World' AND year = 1990)*100) AS percent_lost
+
+# If you compare the amount of forest area lost between 1990 and 2016, to which
+country's total area in 2016 is it closest to?
+SELECT country_name, total_land_area_sqkm
+FROM forestation
+WHERE year = 2016 AND total_land_area_sqkm <= 1324449
+ORDER BY total_land_area_sqkm DESC
+LIMIT 1
